@@ -400,7 +400,7 @@ export const usuariosRoutes: FastifyPluginAsync = async (app) => {
     // --- DELETE /:id (Eliminar/Desactivar usuario) ---
     app.delete('/:id', {
         schema: {
-            description: 'Dar de baja (soft delete) a un usuario del sistema (Solo Admin)',
+            description: 'Dar de baja a un usuario del sistema (Solo Admin)',
             tags: ['Usuarios'],
             security: [{ bearerAuth: [] }],
             params: {
@@ -448,4 +448,51 @@ export const usuariosRoutes: FastifyPluginAsync = async (app) => {
             return handleDBError(reply, error);
         }
     });
+
+    // PATCH /api/usuarios/:id/toggle-activo - Inhabilitar o Habilitar usuario
+    app.patch('/:id/toggle-activo', {
+        schema: {
+            description: 'Inhabilitar o Habilitar usuario',
+            tags: ['Usuarios'],
+            security: [{ bearerAuth: [] }],
+            params: {
+                type: 'object',
+                properties: {
+                    id: { type: 'string', format: 'uuid', description: 'ID del usuario' }
+                }
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        message: { type: 'string' }
+                    }
+                },
+                404: {
+                    type: 'object',
+                    properties: {
+                        error: { type: 'string' }
+                    }
+                }
+            }
+        },
+        preHandler: [app.authenticate, app.authorize('ADMIN', 'GESTOR')]
+    }, async (request, reply) => {
+        const { id } = request.params as any;
+
+        try {
+            const user = await app.db.query.usuarios.findFirst({ where: eq(usuarios.id, id) });
+            if (!user) return reply.status(404).send({ error: 'Usuario no encontrado' });
+
+            const [updated] = await app.db.update(usuarios)
+                .set({ activo: !user.activo })
+                .where(eq(usuarios.id, id))
+                .returning();
+
+            return reply.status(200).send(updated);
+        } catch (error) {
+            return handleDBError(reply, error);
+        }
+    });
+
 };

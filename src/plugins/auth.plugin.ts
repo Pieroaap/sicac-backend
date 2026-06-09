@@ -2,6 +2,8 @@ import fp from 'fastify-plugin';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { createClient } from '@supabase/supabase-js';
 import fastifyJwt from '@fastify/jwt';
+import { usuarios } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 async function authPlugin(app: FastifyInstance) {
     // Configurar JWT de Fastify para que verifique los tokens de Supabase
@@ -36,7 +38,7 @@ async function authPlugin(app: FastifyInstance) {
 
             // Buscamos nuestro usuario interno usando el auth_user_id
             const user = await app.db.query.usuarios.findFirst({
-                where: (u, { eq }) => eq(u.authUserId, supabaseUser.id),
+                where: eq(usuarios.authUserId, supabaseUser.id),
                 with: { roles: { with: { rol: true } } }
             });
 
@@ -47,9 +49,9 @@ async function authPlugin(app: FastifyInstance) {
             // Inyectamos nuestro perfil completo en la request
             request.user = {
                 id: user.id,
-                authUserId: user.authUserId,
+                authUserId: user.authUserId || '',
                 email: user.email,
-                roles: user.roles.map(ur => ur.rol.nombre)
+                roles: user.roles.map((ur: any) => ur.rol.nombre)
             };
 
         } catch (err) {
@@ -60,7 +62,7 @@ async function authPlugin(app: FastifyInstance) {
     // Middleware de Autorización RBAC
     app.decorate('authorize', (...rolesPermitidos: string[]) => {
         return async (request: FastifyRequest, reply: FastifyReply) => {
-            const user = request.user as any;
+            const user = request.user;
             if (!user || !user.roles) {
                 return reply.status(403).send({ error: 'Prohibido: Sin roles asignados' });
             }
@@ -74,13 +76,21 @@ async function authPlugin(app: FastifyInstance) {
 
 export default fp(authPlugin);
 
+declare module '@fastify/jwt' {
+    interface FastifyJWT {
+        user: {
+            id: string;
+            authUserId: string;
+            email: string;
+            roles: string[];
+        };
+    }
+}
+
 declare module 'fastify' {
     interface FastifyInstance {
         supabase: any;
         authenticate: any;
         authorize: (...roles: string[]) => any;
-    }
-    interface FastifyRequest {
-        user: any;
     }
 }

@@ -1,9 +1,9 @@
-import { db } from '../db';
-import { cursosProgramados, detalleMatriculas, matriculas } from '../db/schema';
+import { db } from '../db/index.js';
+import { cursosProgramados, detalleMatriculas, matriculas } from '../db/schema.js';
 import { eq, gt, sql, and } from 'drizzle-orm';
 
 export async function enrollCourse(estudianteId: string, cursoProgramadoId: string, cicloId: string) {
-    return db.transaction(async (tx) => {
+    return db.transaction(async (tx: any) => {
         // 1. Intentar restar cupo de forma atómica (Evita Overselling)
         const [cursoActualizado] = await tx
             .update(cursosProgramados)

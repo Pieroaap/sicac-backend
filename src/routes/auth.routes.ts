@@ -158,11 +158,11 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
         if (!user) return reply.status(404).send({ error: 'Usuario autenticado pero sin perfil en public.usuarios' });
 
-        const roles = user.roles.map(ur => ur.rol.nombre);
+        const roles = user.roles.map((ur: any) => ur.rol.nombre);
         const menuSet = new Set<string>();
         const menuItems: any[] = [];
-        user.roles.forEach(ur => {
-            ur.rol.menus.forEach(rm => {
+        user.roles.forEach((ur: any) => {
+            ur.rol.menus.forEach((rm: any) => {
                 if (!menuSet.has(rm.menu.id) && rm.menu.activo) {
                     menuSet.add(rm.menu.id);
                     menuItems.push(rm.menu);
@@ -219,7 +219,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             return {
                 id: dbUser.id,
                 email: dbUser.email,
-                roles: dbUser.roles.map(ur => ur.rol.nombre),
+                roles: dbUser.roles.map((ur: any) => ur.rol.nombre),
                 requiereCambioClave: true, // ESTO ES LO QUE LEE EL FRONTEND
                 menus: [] // No le damos acceso a nada más
             };

@@ -1,9 +1,9 @@
-import { db } from '../db';
-import { estructuraEvaluacion, notasDetalle, historialNotas } from '../db/schema';
+import { db } from '../db/index.js';
+import { estructuraEvaluacion, notasDetalle, historialNotas } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 export async function calculateFinalGrade(estudianteId: string, cursoProgramadoId: string) {
-    return db.transaction(async (tx) => {
+    return db.transaction(async (tx: any) => {
         const estructuras = await tx.query.estructuraEvaluacion.findMany({
             where: eq(estructuraEvaluacion.cursoProgramadoId, cursoProgramadoId),
         });

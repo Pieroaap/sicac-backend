@@ -1,4 +1,4 @@
-import { menus } from '../db/schema';
+import { menus } from '../db/schema.js';
 
 export function buildMenuTree(menuItems: any[]): any[] {
     const map: any = {};
